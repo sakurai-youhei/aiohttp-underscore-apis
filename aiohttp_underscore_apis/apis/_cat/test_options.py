@@ -5,9 +5,10 @@ from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 from webargs import ValidationError
 
-from aiohttp_underscore_apis._cat.options import (
+from aiohttp_underscore_apis.apis._cat.options import (
     ColumnOrder,
     FnmatchAnyNames,
+    Format,
     Header,
     Ids,
     Order,
@@ -110,7 +111,7 @@ class UseCommonOptionsTest(IsolatedAsyncioTestCase):
 
         req = make_mocked_request(
             method="GET",
-            path="/test/12,34?v&s=cherry:desc&h=app*,*na",
+            path="/test/12,34?v&s=cherry:desc&h=app*,*na&format=json",
             match_info={"ids": "12,34"},
         )
         Context(req.app).set_to(req.app)
@@ -121,6 +122,8 @@ class UseCommonOptionsTest(IsolatedAsyncioTestCase):
             context: Context,
             *,
             ids: set[int] = set(),
+            help: bool = False,
+            format: Format = Format.TEXT,
             v: bool = False,
             s: list[tuple[StrEnum, Order]] = [],
             h: list[str] = ["apple", "banana"],
@@ -130,6 +133,8 @@ class UseCommonOptionsTest(IsolatedAsyncioTestCase):
             self.assertIs(request, req)
             self.assertIs(context, Context.get_from(req.app))
             self.assertEqual(ids, {12, 34})
+            self.assertFalse(help)
+            self.assertEqual(format, Format.JSON)
             self.assertTrue(v)
             self.assertEqual(s, [(Column.CHERRY, Order.DESC)])
             self.assertEqual(h, ["app*", "*na"])

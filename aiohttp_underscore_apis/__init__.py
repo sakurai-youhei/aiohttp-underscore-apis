@@ -1,13 +1,13 @@
 import asyncio
 from dataclasses import dataclass, field
-from itertools import chain
 from typing import Callable, ClassVar, TypeAlias
 
 from aiohttp import web
 from aiohttp.typedefs import Middleware
 
-from aiohttp_underscore_apis import _cat
+from aiohttp_underscore_apis.apis import _cat
 from aiohttp_underscore_apis.context import Context
+from aiohttp_underscore_apis.middlewares import request_inspector
 
 SiteFactory: TypeAlias = Callable[[web.BaseRunner], web.BaseSite]
 
@@ -28,12 +28,11 @@ class AiohttpUnderscoreApis:
         subapps: dict[str, web.Application] = {}
         for mod in type(self)._apis:
             *_, name = mod.__name__.rsplit(".", 1)
+
             app = subapps[name] = web.Application()
-
-            routes = getattr(mod, "__route_table__", web.RouteTableDef())
-            app.add_routes(routes)
-
             ctx.set_to(app)
+
+            mod.setup_routes(app)
 
         return subapps
 
@@ -52,8 +51,4 @@ class AiohttpUnderscoreApis:
 
     @property
     def middlewares(self) -> tuple[Middleware, ...]:
-        return tuple(
-            chain.from_iterable(
-                getattr(mod, "__middlewares__", []) for mod in type(self)._apis
-            )
-        )
+        return (request_inspector,)

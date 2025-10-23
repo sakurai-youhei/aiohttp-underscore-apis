@@ -17,8 +17,17 @@ class Ids(fields.DelimitedList):
         return set(super()._deserialize(*args, **kwargs))
 
 
+class Help(fields.Boolean):
+    truthy = {"", *fields.Boolean.truthy}
+
+
 class Verbose(fields.Boolean):
     truthy = {"", *fields.Boolean.truthy}
+
+
+class Format(StrEnum):
+    TEXT = "text"
+    JSON = "json"
 
 
 class Order(StrEnum):
@@ -82,6 +91,8 @@ class Signature(Protocol):
         context: Context,
         *,
         ids: set[int] = set(),
+        help: bool = False,
+        format: Format = Format.TEXT,
         v: bool = False,
         s: list[tuple[StrEnum, Order]] = [],
         h: list[str] = [],
@@ -107,7 +118,13 @@ def use_common_options(header: Type[StrEnum]):
         _compose(
             use_kwargs({"ids": Ids()}, location="match_info"),
             use_kwargs(
-                {"v": Verbose(), "s": Sort(header), "h": Header(header)},
+                {
+                    "help": Help(),
+                    "format": fields.Enum(Format, by_value=True),
+                    "v": Verbose(),
+                    "s": Sort(header),
+                    "h": Header(header),
+                },
                 location="querystring",
             ),
             Context.use,

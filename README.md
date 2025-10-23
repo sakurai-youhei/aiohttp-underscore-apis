@@ -4,9 +4,9 @@ Inspect and manage aiohttp web application like Elasticsearch
 `aiohttp-underscore-apis` provides the following APIs:
 
 - Compact and aligned text (CAT)
-    - `GET /_cat` (TODO)
+    - `GET /_cat`
     - `GET /_cat/middlewares` (TODO)
-    - `GET /_cat/routes` (In Progress)
+    - `GET /_cat/routes`
     - `GET /_cat/tasks` (TODO)
 - Routes
     - `GET /_routes` (TODO)
