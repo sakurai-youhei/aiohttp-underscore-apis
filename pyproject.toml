@@ -5,7 +5,7 @@ requires = [ "hatchling>=1.26" ]
 
 [project]
 name = "aiohttp-underscore-apis"
-version = "2025.10.21a1"
+version = "2025.10.23a1"
 description = "Inspect and manage aiohttp web application like Elasticsearch"
 readme = "README.md"
 license = "MIT"
@@ -32,3 +32,6 @@ optional-dependencies.dev = [
 
 [tool.black]
 line-length = 79
+
+[tool.isort]
+profile = "black"

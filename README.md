@@ -48,10 +48,10 @@ your_app.middlewares.extend(aiohttp_underscore_apis.middlewares)
 web.run_app(your_app)  # Run your app as usual
 ```
 
-With this setup, you can call the underscore APIs as follows.
+With the setup above, you can call the underscore APIs as follows.
 
 ```shell
-curl --unix-socket /tmp/aiohttp-underscore-apis.sock \
+curl -s --unix-socket /tmp/aiohttp-underscore-apis.sock \
   'http://./_cat/routes?v&s=path'
 ```
 
@@ -59,7 +59,7 @@ Alternatively, you can also do it more Kibana-ishly as follows.
 
 ```shell
 function GET() {
-  curl --unix-socket /tmp/aiohttp-underscore-apis.sock \
+  curl -s --unix-socket /tmp/aiohttp-underscore-apis.sock \
     http://./${1#"${1%%[^/]*}"}
 }
 
