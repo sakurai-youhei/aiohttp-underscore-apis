@@ -5,7 +5,7 @@ requires = [ "hatchling>=1.26" ]
 
 [project]
 name = "aiohttp-underscore-apis"
-version = "2025.10.23a2"
+version = "2025.10.24a1"
 description = "Inspect and manage aiohttp web application like Elasticsearch"
 readme = "README.md"
 license = "MIT"
@@ -23,10 +23,12 @@ classifiers = [
 ]
 dependencies = [
   "aiohttp",
+  "pyyaml",
   "tabulate",
   "webargs",
 ]
 optional-dependencies.dev = [
+  "types-pyyaml",
   "types-tabulate",
 ]
 
@@ -35,3 +37,4 @@ line-length = 79
 
 [tool.isort]
 profile = "black"
+line_length = 79

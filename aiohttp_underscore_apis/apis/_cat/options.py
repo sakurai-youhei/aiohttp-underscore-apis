@@ -1,12 +1,8 @@
 from enum import StrEnum
 from fnmatch import fnmatch
-from typing import Any, Awaitable, Callable, Concatenate, Protocol, Type, cast
+from typing import Type
 
-from aiohttp import web
 from webargs import ValidationError, fields, validate
-from webargs.aiohttpparser import use_kwargs
-
-from aiohttp_underscore_apis.context import Context
 
 
 class Ids(fields.DelimitedList):
@@ -23,11 +19,6 @@ class Help(fields.Boolean):
 
 class Verbose(fields.Boolean):
     truthy = {"", *fields.Boolean.truthy}
-
-
-class Format(StrEnum):
-    TEXT = "text"
-    JSON = "json"
 
 
 class Order(StrEnum):
@@ -82,51 +73,3 @@ class FnmatchAnyNames(validate.Validator):
 class Header(fields.DelimitedList):
     def __init__(self, column: Type[StrEnum]):
         super().__init__(fields.Str(validate=FnmatchAnyNames(*column)))
-
-
-class Signature(Protocol):
-    def __call__(
-        self,
-        request: web.Request,
-        context: Context,
-        *,
-        ids: set[int] = set(),
-        help: bool = False,
-        format: Format = Format.TEXT,
-        v: bool = False,
-        s: list[tuple[StrEnum, Order]] = [],
-        h: list[str] = [],
-        **kwargs: Any,
-    ) -> Awaitable[web.Response]: ...
-
-
-def _compose(*decorators):
-    def composed(fn):
-        for decorator in reversed(decorators):
-            fn = decorator(fn)
-        return fn
-
-    return composed
-
-
-def use_common_options(header: Type[StrEnum]):
-    return cast(
-        Callable[
-            [Signature],
-            Callable[Concatenate[web.Request, ...], Awaitable[web.Response]],
-        ],
-        _compose(
-            use_kwargs({"ids": Ids()}, location="match_info"),
-            use_kwargs(
-                {
-                    "help": Help(),
-                    "format": fields.Enum(Format, by_value=True),
-                    "v": Verbose(),
-                    "s": Sort(header),
-                    "h": Header(header),
-                },
-                location="querystring",
-            ),
-            Context.use,
-        ),
-    )

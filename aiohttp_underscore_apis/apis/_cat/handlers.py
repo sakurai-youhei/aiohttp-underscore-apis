@@ -2,34 +2,38 @@ from enum import StrEnum
 from fnmatch import fnmatch
 from itertools import chain
 from operator import itemgetter
+from typing import Any
 
+import yaml
 from aiohttp import web
 from tabulate import tabulate
 
-from aiohttp_underscore_apis.apis._cat.options import (
-    Format,
-    Order,
-    use_common_options,
+from aiohttp_underscore_apis.apis._cat.helpers import (
+    SortKeyWithNanSupport,
+    dissect_request,
 )
+from aiohttp_underscore_apis.apis._cat.options import Order
+from aiohttp_underscore_apis.apis.common import Format
 from aiohttp_underscore_apis.context import Context
+from aiohttp_underscore_apis.stats import RouteStats
 
 
 class RoutesColumn(StrEnum):
     ID = "id"
+    HANDLER = "handler"
     NAME = "name"
     METHOD = "method"
     PATH = "path"
-    REQ_ACTIVE_COUNT = "req.active.count"
-    REQ_TOTAL_COUNT = "req.total.count"
-    RESP_TIME_AVG_1M = "resp.time_sec.avg_1m"
-    RESP_TIME_AVG_5M = "resp.time_sec.avg_5m"
-    RESP_TIME_AVG_15M = "resp.time_sec.avg_15m"
+    REQ_ACTIVE_COUNT = "stats.req.active"
+    REQ_TOTAL_COUNT = "stats.req.total"
+    RESP_TIME_AVG_1M = "stats.resp.time_avg_1m"
+    RESP_TIME_AVG_5M = "stats.resp.time_avg_5m"
+    RESP_TIME_AVG_15M = "stats.resp.time_avg_15m"
 
     @classmethod
     def defaults(cls):
         return [
             cls.ID.value,
-            cls.NAME.value,
             cls.METHOD.value,
             cls.PATH.value,
             cls.REQ_ACTIVE_COUNT.value,
@@ -40,6 +44,7 @@ class RoutesColumn(StrEnum):
     def helps(cls) -> dict[str, str]:
         return {
             cls.ID: "Internal identifier",
+            cls.HANDLER: "Route handler",
             cls.NAME: "Route name",
             cls.METHOD: "Route HTTP method",
             cls.PATH: "Route path",
@@ -50,8 +55,33 @@ class RoutesColumn(StrEnum):
             cls.RESP_TIME_AVG_15M: "Average response time over last 15 min",
         }
 
+    @classmethod
+    def make_dict(
+        cls, route: web.AbstractRoute, stats: RouteStats
+    ) -> dict[str, Any]:
 
-@use_common_options(RoutesColumn)
+        handler = f"{route.handler.__module__}.{route.handler.__name__}"
+        info = route.get_info()
+        path = info.get("path") or info.get("formatter", "<unknown>")
+
+        return dict(
+            zip(
+                cls,
+                (
+                    id(route),
+                    handler,
+                    route.name or "",
+                    route.method,
+                    path,
+                    stats.counter.active,
+                    stats.counter.total,
+                    *stats.time_avg.calculate(),
+                ),
+            )
+        )
+
+
+@dissect_request(RoutesColumn)
 async def routes(
     request: web.Request,
     context: Context,
@@ -69,39 +99,22 @@ async def routes(
         text = tabulate(RoutesColumn.helps().items())
         return web.Response(text=text + "\n")
 
-    resources = context.core_app.router.resources()
-    route_stats = context.route_stats
-
     table: list[dict[str, str | int | float]] = []
 
-    for route in chain.from_iterable(resources):
+    for route in context.core_app.router.routes():
         route_id = id(route)
 
         if ids and route_id not in ids:
             continue
 
-        stats = route_stats[route_id]
-        avg_1m, avg_5m, avg_15m = stats.time_avg.calculate()
-
-        info = route.get_info()
-        path = info.get("path") or info.get("formatter", "<unknown>")
-        table.append(
-            {
-                "id": route_id,
-                "name": route.name or "",
-                "method": route.method,
-                "path": path,
-                "req.active.count": stats.counter.active,
-                "req.total.count": stats.counter.total,
-                "resp.time_sec.avg_1m": avg_1m,
-                "resp.time_sec.avg_5m": avg_5m,
-                "resp.time_sec.avg_15m": avg_15m,
-            }
-        )
+        row = RoutesColumn.make_dict(route, context.route_stats[route_id])
+        table.append(row)
 
     for column, order in reversed(s):
-        reverse = order == Order.DESC
-        table.sort(key=itemgetter(column), reverse=reverse)
+        table.sort(
+            key=SortKeyWithNanSupport(column),
+            reverse=order == Order.DESC,
+        )
 
     headers = tuple(
         chain.from_iterable(
@@ -114,7 +127,20 @@ async def routes(
     if format == Format.JSON:
         return web.json_response([dict(zip(headers, row)) for row in rows])
 
-    text = tabulate(
-        rows, headers=headers if v else [], tablefmt="plain", floatfmt=".6f"
-    )
-    return web.Response(text=text + "\n")
+    elif format == Format.YAML:
+        text = yaml.dump(
+            [dict(zip(map(str, headers), row)) for row in rows],
+            sort_keys=False,
+        )
+        content_type = "application/x-yaml"
+
+    else:
+        text = tabulate(
+            rows,
+            headers=headers if v else [],
+            tablefmt="plain",
+            floatfmt=".6f",
+        )
+        content_type = "text/plain"
+
+    return web.Response(text=text + "\n", content_type=content_type)
