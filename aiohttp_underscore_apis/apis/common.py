@@ -1,5 +1,13 @@
 from enum import StrEnum
-from typing import Any, Awaitable, Callable, Concatenate, Protocol, cast
+from functools import partial, reduce
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Concatenate,
+    Protocol,
+    cast,
+)
 
 from aiohttp import web
 from webargs import fields
@@ -16,6 +24,15 @@ class Ids(fields.DelimitedList):
         return set(super()._deserialize(*args, **kwargs))
 
 
+class Pretty(fields.Boolean):
+    truthy = {"", *fields.Boolean.truthy}
+
+
+class FilterPath(fields.DelimitedList):
+    def __init__(self):
+        super().__init__(fields.Str)
+
+
 class Format(StrEnum):
     TEXT = "text"
     JSON = "json"
@@ -30,29 +47,31 @@ class Signature(Protocol):
         *,
         ids: set[int] = set(),
         format: Format = Format.JSON,
-        **kwargs: Any,
+        pretty: bool = False,
+        filter_path: list[str] = [],
+        **_: Any,
     ) -> Awaitable[web.Response]: ...
 
-
-def compose(*decorators):
-    def composed(fn):
-        for decorator in reversed(decorators):
-            fn = decorator(fn)
-        return fn
-
-    return composed
-
-
-_format_field = fields.Enum(Format, by_value=True)
 
 dissect_request = cast(
     Callable[
         [Signature],
         Callable[Concatenate[web.Request, ...], Awaitable[web.Response]],
     ],
-    compose(
-        use_kwargs({"ids": Ids()}, location="match_info"),
-        use_kwargs({"format": _format_field}, location="querystring"),
-        Context.use,
+    partial(
+        reduce,
+        lambda handler, deco: cast(Callable, deco)(handler),
+        (
+            Context.use,
+            use_kwargs({"ids": Ids()}, location="match_info"),
+            use_kwargs(
+                {
+                    "format": fields.Enum(Format, by_value=True),
+                    "pretty": Pretty(),
+                    "filter_path": FilterPath(),
+                },
+                location="querystring",
+            ),
+        ),
     ),
 )

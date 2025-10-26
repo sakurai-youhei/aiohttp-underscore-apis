@@ -1,4 +1,5 @@
 from enum import StrEnum
+from functools import partial, reduce
 from typing import Any, Awaitable, Callable, Concatenate, Protocol, Type, cast
 
 from aiohttp import web
@@ -13,7 +14,6 @@ from aiohttp_underscore_apis.apis._cat.options import (
 )
 from aiohttp_underscore_apis.apis.common import (
     Format,
-    compose,
 )
 from aiohttp_underscore_apis.apis.common import (
     dissect_request as _dissect_request,
@@ -33,7 +33,7 @@ class Signature(Protocol):
         v: bool = False,
         s: list[tuple[StrEnum, Order]] = [],
         h: list[str] = [],
-        **kwargs: Any,
+        **_: Any,
     ) -> Awaitable[web.Response]: ...
 
 
@@ -43,16 +43,20 @@ def dissect_request(header: Type[StrEnum]):
             [Signature],
             Callable[Concatenate[web.Request, ...], Awaitable[web.Response]],
         ],
-        compose(
-            _dissect_request,
-            use_kwargs(
-                {
-                    "help": Help(),
-                    "v": Verbose(),
-                    "s": Sort(header),
-                    "h": Header(header),
-                },
-                location="querystring",
+        partial(
+            reduce,
+            lambda handler, deco: cast(Callable, deco)(handler),
+            (
+                _dissect_request,
+                use_kwargs(
+                    {
+                        "help": Help(),
+                        "v": Verbose(),
+                        "s": Sort(header),
+                        "h": Header(header),
+                    },
+                    location="querystring",
+                ),
             ),
         ),
     )

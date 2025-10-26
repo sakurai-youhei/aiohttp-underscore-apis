@@ -4,7 +4,12 @@ from aiohttp import web
 from aiohttp.test_utils import make_mocked_request
 from webargs import ValidationError
 
-from aiohttp_underscore_apis.apis.common import Format, Ids, dissect_request
+from aiohttp_underscore_apis.apis.common import (
+    Format,
+    Ids,
+    Pretty,
+    dissect_request,
+)
 from aiohttp_underscore_apis.context import Context
 
 
@@ -23,13 +28,23 @@ class FieldsTest(TestCase):
             with self.assertRaises(ValidationError):
                 Ids().deserialize(invalid_value)
 
+    def test_Pretty(self):
+        for value, expected in (
+            ("", True),
+            ("true", True),
+            ("1", True),
+            ("false", False),
+            ("0", False),
+        ):
+            self.assertEqual(Pretty().deserialize(value), expected)
+
 
 class HandlerDecoratingTest(IsolatedAsyncioTestCase):
     async def test_dissect_request(self):
 
         mocked_request = make_mocked_request(
             method="GET",
-            path="/_routes/12,34?foo=true&format=yaml",
+            path="/_routes/12,34?foo=true&format=yaml&pretty&filter_path=a,-b",
             match_info={"ids": "12,34"},
         )
         Context(mocked_request.app).set_to(mocked_request.app)
@@ -41,6 +56,8 @@ class HandlerDecoratingTest(IsolatedAsyncioTestCase):
             *,
             ids: set[int] = set(),
             format: Format = Format.JSON,
+            pretty: bool = False,
+            filter_path: list[str] = [],
             **_,
         ) -> web.Response:
 
@@ -48,6 +65,8 @@ class HandlerDecoratingTest(IsolatedAsyncioTestCase):
             self.assertIs(context, Context.get_from(mocked_request.app))
             self.assertEqual(ids, {12, 34})
             self.assertEqual(format, Format.YAML)
+            self.assertTrue(pretty)
+            self.assertTrue(filter_path, ["a", "-b"])
             return web.Response(text="OK")
 
         resp = await handler(mocked_request)

@@ -9,7 +9,7 @@ Inspect and manage aiohttp web application like Elasticsearch
     - `GET /_cat/routes`
     - `GET /_cat/tasks` (TODO)
 - Routes
-    - `GET /_routes` (In Progress)
+    - `GET /_routes`
     - `GET /_routes/_settings` (TODO)
     - `GET /_routes/_stats` (TODO)
     - `PUT /_routes/{route_id}/_settings` (TODO)

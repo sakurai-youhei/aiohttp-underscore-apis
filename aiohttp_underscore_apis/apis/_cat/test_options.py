@@ -7,7 +7,9 @@ from aiohttp_underscore_apis.apis._cat.options import (
     ColumnOrder,
     FnmatchAnyNames,
     Header,
+    Help,
     Sort,
+    Verbose,
 )
 
 
@@ -18,6 +20,26 @@ class Column(StrEnum):
 
 
 class FieldsTest(TestCase):
+    def test_Help(self):
+        for value, expected in (
+            ("", True),
+            ("true", True),
+            ("1", True),
+            ("false", False),
+            ("0", False),
+        ):
+            self.assertEqual(Help().deserialize(value), expected)
+
+    def test_Verbose(self):
+        for value, expected in (
+            ("", True),
+            ("true", True),
+            ("1", True),
+            ("false", False),
+            ("0", False),
+        ):
+            self.assertEqual(Verbose().deserialize(value), expected)
+
     def test_ColumnOrder(self):
         for value, expected in (
             ("apple", (Column.APPLE, "asc")),

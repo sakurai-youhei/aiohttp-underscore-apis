@@ -5,14 +5,6 @@ from typing import Type
 from webargs import ValidationError, fields, validate
 
 
-class Ids(fields.DelimitedList):
-    def __init__(self):
-        super().__init__(fields.Int)
-
-    def _deserialize(self, *args, **kwargs):
-        return set(super()._deserialize(*args, **kwargs))
-
-
 class Help(fields.Boolean):
     truthy = {"", *fields.Boolean.truthy}
 
