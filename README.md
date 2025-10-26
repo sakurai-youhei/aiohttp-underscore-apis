@@ -64,6 +64,11 @@ function GET() {
   curl -s --unix-socket /tmp/aiohttp-underscore-apis.sock \
     http://./${1#"${1%%[^/]*}"}
 }
+function POST() {
+  curl -s --unix-socket /tmp/aiohttp-underscore-apis.sock \
+    -X POST -H "Content-Type: application/json" \
+    http://./${1#"${1%%[^/]*}"} ${@:2}
+}
 
 GET '_cat/routes?v&s=path'
 ```
