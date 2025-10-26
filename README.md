@@ -5,15 +5,16 @@ Inspect and manage aiohttp web application like Elasticsearch
 
 - Compact and aligned text (CAT)
     - `GET /_cat`
-    - `GET /_cat/middlewares` (TODO)
+    - `GET /_cat/middlewares` (Nice to have?)
     - `GET /_cat/routes`
     - `GET /_cat/tasks` (TODO)
+    - `GET /_cat/transports` (Nice to have?)
 - Routes
     - `GET /_routes`
     - `GET /_routes/_settings` (TODO)
     - `GET /_routes/_stats` (TODO)
     - `PUT /_routes/{route_id}/_settings` (TODO)
-    - `POST /_routes/{route_id}/_cancel` (TODO)
+    - `POST /_routes/{route_id}/_cancel_tasks`
 
 > [!NOTE]
 > Project status: Under construction - I am still experimenting with how to structure code in the project.

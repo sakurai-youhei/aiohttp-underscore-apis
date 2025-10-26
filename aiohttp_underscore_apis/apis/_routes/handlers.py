@@ -52,3 +52,19 @@ async def _routes(
     return web.json_response(
         routes, dumps=partial(json.dumps, indent=4 if pretty else None)
     )
+
+
+@dissect_request
+async def _routes_cancel_tasks(
+    request: web.Request,
+    context: Context,
+    *,
+    ids: set[int] = set(),
+    **_: Any,
+) -> web.Response:
+
+    for route_id in ids:
+        for task in context.task_refs[route_id]:
+            task.cancel()
+
+    return web.Response(status=204)

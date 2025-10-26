@@ -7,7 +7,10 @@ from aiohttp.typedefs import Middleware
 
 from aiohttp_underscore_apis.apis import _cat, _routes
 from aiohttp_underscore_apis.context import Context
-from aiohttp_underscore_apis.middlewares import request_inspector
+from aiohttp_underscore_apis.middlewares import (
+    request_inspector,
+    task_tracker,
+)
 from aiohttp_underscore_apis.types import SiteFactory
 
 
@@ -50,4 +53,7 @@ class AiohttpUnderscoreApis:
 
     @property
     def middlewares(self) -> tuple[Middleware, ...]:
-        return (request_inspector,)
+        return (
+            request_inspector,
+            task_tracker,
+        )

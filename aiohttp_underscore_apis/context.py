@@ -1,8 +1,10 @@
+from asyncio import Task
 from collections import defaultdict
 from collections.abc import Awaitable
 from dataclasses import dataclass, field
 from functools import partial, wraps
-from typing import Callable, Concatenate, ParamSpec
+from typing import Callable, Concatenate, DefaultDict, ParamSpec
+from weakref import WeakSet
 
 from aiohttp import web
 
@@ -15,8 +17,11 @@ P = ParamSpec("P")
 @dataclass(frozen=True)
 class Context:
     core_app: web.Application
-    route_stats: dict[int, RouteStats] = field(
+    route_stats: DefaultDict[int, RouteStats] = field(
         default_factory=partial(defaultdict, RouteStats)
+    )
+    task_refs: DefaultDict[int, WeakSet[Task]] = field(
+        default_factory=partial(defaultdict, WeakSet)
     )
 
     def set_to(self, app: web.Application) -> None:
