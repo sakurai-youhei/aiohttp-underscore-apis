@@ -8,6 +8,7 @@ from weakref import WeakSet
 
 from aiohttp import web
 
+from aiohttp_underscore_apis.settings import RouteSettings
 from aiohttp_underscore_apis.stats import RouteStats
 
 APP_CONTEXT_KEY = "_aiohttp_underscore_apis_context_"
@@ -19,6 +20,9 @@ class Context:
     core_app: web.Application
     route_stats: DefaultDict[int, RouteStats] = field(
         default_factory=partial(defaultdict, RouteStats)
+    )
+    route_settings: DefaultDict[int, RouteSettings] = field(
+        default_factory=partial(defaultdict, RouteSettings)
     )
     task_refs: DefaultDict[int, WeakSet[Task]] = field(
         default_factory=partial(defaultdict, WeakSet)

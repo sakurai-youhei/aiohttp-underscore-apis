@@ -11,10 +11,10 @@ Inspect and manage aiohttp web application like Elasticsearch
     - `GET /_cat/transports` (Nice to have?)
 - Routes
     - `GET /_routes`
-    - `GET /_routes/_settings` (TODO)
-    - `GET /_routes/_stats` (TODO)
-    - `PUT /_routes/{route_id}/_settings` (TODO)
-    - `POST /_routes/{route_id}/_cancel_tasks`
+    - `GET /_routes/settings` (`flat_settings` is not yet supported)
+    - `GET /_routes/stats` (TODO)
+    - `PUT /_routes/{route_id}/settings` (TODO)
+    - `POST /_routes/{route_id}/cancel_tasks`
 
 > [!NOTE]
 > Project status: Under construction - I am still experimenting with how to structure code in the project.

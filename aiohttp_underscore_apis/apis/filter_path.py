@@ -20,6 +20,13 @@ def _filter_path(value: Any, *matchers: Callable, path: str = "") -> Any:
     raise _UnnecessaryPath()
 
 
+def _is_necessary_path(*matchers: Callable, path: str = "") -> bool:
+    try:
+        return ... is _filter_path(..., *matchers, path=path)
+    except _UnnecessaryPath:
+        return False
+
+
 @_filter_path.register
 def _(lst: list, *matchers: Callable, path: str = "") -> list:
     filtered: deque[Any] = deque()
@@ -28,7 +35,7 @@ def _(lst: list, *matchers: Callable, path: str = "") -> list:
         with suppress(_UnnecessaryPath):
             filtered.append(_filter_path(item, *matchers, path=path))
 
-    if not filtered:
+    if not filtered and not _is_necessary_path(*matchers, path=path):
         raise _UnnecessaryPath()
 
     return list(filtered)
@@ -44,7 +51,7 @@ def _(dct: dict, *matchers: Callable, path: str = "") -> dict:
                 dct[key], *matchers, path=f"{path}.{key}" if path else key
             )
 
-    if not filtered:
+    if not filtered and not _is_necessary_path(*matchers, path=path):
         raise _UnnecessaryPath()
 
     return filtered

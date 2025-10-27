@@ -44,7 +44,7 @@ class Counter:
     total: int = 0
 
 
-@dataclass
+@dataclass(frozen=True)
 class RouteStats:
     counter: Counter = field(default_factory=Counter)
     time_avg: TimeAverage = field(default_factory=TimeAverage)
