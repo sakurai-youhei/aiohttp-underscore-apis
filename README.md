@@ -141,7 +141,7 @@ $ PUT /_routes/{route_id}/settings -d '
 ```
 
 If you also need to forcefully drain requests that have been already started processing,
-you can achieve it by canceling the superior aiohttp tasks using the following endpoint:
+you can achieve it by canceling the superior asyncio tasks using the following endpoint:
 
 ```shell
 $ POST /_routes/{route_id}/interrupt
