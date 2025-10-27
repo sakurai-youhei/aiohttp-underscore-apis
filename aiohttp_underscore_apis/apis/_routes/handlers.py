@@ -12,14 +12,13 @@ from aiohttp_underscore_apis.apis.filter_path import (
     filter_path as _filter_path,
 )
 from aiohttp_underscore_apis.context import Context
+from aiohttp_underscore_apis.settings import RouteSettingsSchema
 
 
 def _response(
     data: Any, filter_path: list[str], format: Format, pretty: bool
 ) -> web.Response:
-    print(data)
     data = _filter_path(data, *filter_path)
-    print(data)
 
     if format == Format.YAML:
         return web.Response(
@@ -65,7 +64,7 @@ async def _routes(
 
 
 @dissect_request
-async def _routes_cancel_tasks(
+async def _routes_interrupt(
     request: web.Request,
     context: Context,
     *,
@@ -78,11 +77,6 @@ async def _routes_cancel_tasks(
             task.cancel()
 
     return web.Response(status=204)
-
-
-class _Settings(TypedDict):
-    transient: dict[str, Any]
-    defaults: NotRequired[dict[str, Any]]
 
 
 class IncludeDefaults(fields.Boolean):
@@ -103,7 +97,11 @@ async def _routes_settings(
     **_: Any,
 ) -> web.Response:
 
-    settings: dict[int, _Settings] = {}
+    class RouteSettings(TypedDict):
+        transient: dict[str, Any]
+        defaults: NotRequired[dict[str, Any]]
+
+    settings: dict[int, RouteSettings] = {}
     for route in context.core_app.router.routes():
         route_id = id(route)
         if ids and route_id not in ids:
@@ -116,5 +114,32 @@ async def _routes_settings(
         if include_defaults:
             settings[route_id]["defaults"] = route_settings.defaults
 
-    print(settings, filter_path, format, pretty)
     return _response(settings, filter_path, format, pretty)
+
+
+@dissect_request
+@use_kwargs(RouteSettingsSchema, location="json")
+async def _set_route_settings(
+    request: web.Request,
+    context: Context,
+    *,
+    ids: set[int] = set(),
+    transient: dict[str, Any] | None = None,
+    **_: Any,
+) -> web.Response:
+
+    for route_id in ids:
+        settings = context.route_settings[route_id]
+
+        if transient and transient.get("preempt"):
+            for key in ("status", "reason"):
+                value = transient["preempt"].get(key)
+                if value is None:
+                    settings.transient.setdefault("preempt", {}).pop(key, None)
+                else:
+                    settings.transient.setdefault("preempt", {})[key] = value
+
+        if not settings.transient.get("preempt"):
+            settings.transient.pop("preempt", None)
+
+    return await _routes_settings(request)

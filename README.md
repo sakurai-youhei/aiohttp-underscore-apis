@@ -13,8 +13,8 @@ Inspect and manage aiohttp web application like Elasticsearch
     - `GET /_routes`
     - `GET /_routes/settings` (`flat_settings` is not yet supported)
     - `GET /_routes/stats` (TODO)
-    - `PUT /_routes/{route_id}/settings` (TODO)
-    - `POST /_routes/{route_id}/cancel_tasks`
+    - `PUT /_routes/{route_id}/settings` (Dot notation is not yet supported)
+    - `POST /_routes/{route_id}/interrupt`
 
 > [!NOTE]
 > Project status: Under construction - I am still experimenting with how to structure code in the project.
@@ -62,12 +62,13 @@ Alternatively, you can also do it more Kibana-ishly as follows.
 ```shell
 function GET() {
   curl -s --unix-socket /tmp/aiohttp-underscore-apis.sock \
-    http://./${1#"${1%%[^/]*}"}
+    http://./${1#"${1%%[^/]*}"} "${@:2}"
 }
 function POST() {
-  curl -s --unix-socket /tmp/aiohttp-underscore-apis.sock \
-    -X POST -H "Content-Type: application/json" \
-    http://./${1#"${1%%[^/]*}"} ${@:2}
+  GET "$@" -X POST -H "Content-Type: application/json"
+}
+function PUT() {
+  GET "$@" -X PUT -H "Content-Type: application/json"
 }
 
 GET '_cat/routes?v&s=path'
@@ -113,4 +114,48 @@ for name, subapp in aiohttp_underscore_apis.init_subapps(your_app).items():
 your_app.middlewares.extend(aiohttp_underscore_apis.middlewares)
 
 web.run_app(your_app)  # Run your app as usual
+```
+
+## Use case
+
+Suppose your aiohttp web application suddenly experiences an unexplained surge in traffic.
+`aiohttp-underscore-apis` enables troubleshooting through endpoints starting with an underscore.
+
+First, try `GET _cat/routes?v`, which will output a list of all registered routes.
+To sort by path, add `&s=path`. If you need more information, add `&h=*`.
+If the list is too large, you can use grep, or try output formatting with jq by specifying `&format=json`.
+
+If the investigation reveals that heavy traffic to a specific route is severely impacting
+the overall application's performance, it may be advisable to temporarily deactivate that
+route and attempt fallback operation. In such cases, configure the route to return a 503
+status code as follows.
+
+```shell
+$ PUT /_routes/{route_id}/settings -d '
+{"transient":
+  {"preempt":
+    {"status": 503, "reason": "Route is temporarily deactivated"}
+  }
+}
+'
+```
+
+If you also need to forcefully drain requests that have been already started processing,
+you can achieve it by canceling the superior aiohttp tasks using the following endpoint:
+
+```shell
+$ POST /_routes/{route_id}/interrupt
+```
+
+Once the storm has passed, you can stop the fallback operation by nulling the settings
+as follows.
+
+```shell
+$ PUT /_routes/{route_id}/settings -d '
+{"transient":
+  {"preempt":
+    {"status": null, "reason": null}
+  }
+}
+'
 ```
