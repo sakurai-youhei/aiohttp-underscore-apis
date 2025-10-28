@@ -36,7 +36,11 @@ async def request_interceptor(request: web.Request, handler):
     )
 
     if preempt["status"] is not None:
-        return web.Response(status=preempt["status"], reason=preempt["reason"])
+        return web.Response(
+            status=preempt["status"],
+            reason=preempt["reason"],
+            text=preempt["text"],
+        )
 
     return await handler(request)
 

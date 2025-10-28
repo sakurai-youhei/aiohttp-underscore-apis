@@ -132,7 +132,7 @@ async def _set_route_settings(
         settings = context.route_settings[route_id]
 
         if transient and transient.get("preempt"):
-            for key in ("status", "reason"):
+            for key in ("status", "reason", "text"):
                 value = transient["preempt"].get(key)
                 if value is None:
                     settings.transient.setdefault("preempt", {}).pop(key, None)

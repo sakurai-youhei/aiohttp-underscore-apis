@@ -8,6 +8,7 @@ from marshmallow.validate import Range
 class PreemptSchema(Schema):
     status = fields.Integer(allow_none=True, validate=Range(min=100, max=599))
     reason = fields.String(allow_none=True)
+    text = fields.String(allow_none=True)
 
 
 class SettingsSchema(Schema):
@@ -23,6 +24,7 @@ def _defaults() -> dict[str, Any]:
         "preempt": {
             "status": None,
             "reason": None,
+            "text": None,
         },
     }
 
