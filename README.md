@@ -7,7 +7,7 @@ Inspect and manage aiohttp web application like Elasticsearch
     - `GET /_cat`
     - `GET /_cat/middlewares` (Nice to have?)
     - `GET /_cat/routes`
-    - `GET /_cat/tasks` (TODO)
+    - `GET /_cat/tasks`
     - `GET /_cat/transports` (Nice to have?)
 - Routes
     - `GET /_routes`
@@ -15,6 +15,11 @@ Inspect and manage aiohttp web application like Elasticsearch
     - `GET /_routes/stats` (TODO)
     - `PUT /_routes/{route_id}/settings` (Dot notation is not yet supported)
     - `POST /_routes/{route_id}/interrupt`
+- Tasks
+    - `GET /_tasks` (TODO)
+    - `GET /_tasks/{task_id}/cancel` (TODO)
+    - `GET /_tasks/{task_id}/print_stack` (TODO)
+
 
 > [!NOTE]
 > Project status: Under construction - I am still experimenting with how to structure code in the project.

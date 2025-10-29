@@ -3,7 +3,8 @@ from textwrap import dedent
 
 from aiohttp import web
 
-from aiohttp_underscore_apis.apis._cat.handlers import routes as _routes
+from aiohttp_underscore_apis.apis._cat.handlers import routes as _cat_routes
+from aiohttp_underscore_apis.apis._cat.handlers import tasks as _cat_tasks
 
 
 def setup_routes(app: web.Application) -> None:
@@ -23,8 +24,12 @@ def setup_routes(app: web.Application) -> None:
             )
         )
 
-    routes_get("/routes")(_routes)
-    routes_get("/routes/")(_routes)
-    routes_get("/routes/{ids:[0-9]+(,[0-9]+)*}")(_routes)
+    routes_get("/routes")(_cat_routes)
+    routes_get("/routes/")(_cat_routes)
+    routes_get("/routes/{ids:[0-9]+(,[0-9]+)*}")(_cat_routes)
+
+    routes_get("/tasks")(_cat_tasks)
+    routes_get("/tasks/")(_cat_tasks)
+    routes_get("/tasks/{ids:[0-9]+(,[0-9]+)*}")(_cat_tasks)
 
     app.add_routes(routes)
