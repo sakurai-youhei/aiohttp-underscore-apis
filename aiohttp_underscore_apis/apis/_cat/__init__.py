@@ -20,6 +20,8 @@ def setup_routes(app: web.Application) -> None:
                     =^.^=
                     /routes
                     /routes/{route_id}
+                    /tasks
+                    /tasks/{task_id}
                 """
             )
         )
