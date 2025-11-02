@@ -31,11 +31,10 @@ class ColumnOrder(fields.DelimitedTuple):
         self.validate_length.max = 2
         self.validate_length.equal = None
 
-    def _deserialize(self, *args, **kwargs):
-        value = super()._deserialize(*args, **kwargs)
-        if len(value) == 1:
-            return (value[0], Order.ASC)
-        return value[0], value[1]
+    def _deserialize(self, value, attr, data, **kwargs):
+        if self.delimiter not in value:
+            value += f"{self.delimiter}{Order.ASC}"
+        return super()._deserialize(value, attr, data, **kwargs)
 
 
 class Sort(fields.DelimitedList):
