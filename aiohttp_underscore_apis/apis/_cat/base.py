@@ -56,11 +56,15 @@ class CatBase(StrEnum):
         )
 
     @classmethod
-    def _json_response(cls, rows, headers) -> web.Response:
+    def _json_response(
+        cls, rows: Iterable[Any], headers: Sequence[str]
+    ) -> web.Response:
         return web.json_response([dict(zip(headers, row)) for row in rows])
 
     @classmethod
-    def _yaml_response(cls, rows, headers) -> web.Response:
+    def _yaml_response(
+        cls, rows: Iterable[Any], headers: Sequence[str]
+    ) -> web.Response:
         return web.Response(
             text=yaml.dump(
                 [dict(zip(map(str, headers), row)) for row in rows],
@@ -71,7 +75,9 @@ class CatBase(StrEnum):
         )
 
     @classmethod
-    def _text_response(cls, rows, headers) -> web.Response:
+    def _text_response(
+        cls, rows: Iterable[Any], headers: Sequence[str]
+    ) -> web.Response:
         return web.Response(
             text=tabulate(
                 rows,
@@ -125,7 +131,11 @@ class CatBase(StrEnum):
                 )
 
             headers = cls._include_headers(h)
-            rows = map(itemgetter(*headers), table)
+            rows: Iterable[Any]
+            if len(headers) > 1:
+                rows = map(itemgetter(*headers), table)
+            else:
+                rows = ((row[headers[0]],) for row in table)
 
             if format == Format.JSON:
                 return cls._json_response(rows, headers)
