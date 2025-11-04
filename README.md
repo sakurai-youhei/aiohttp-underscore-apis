@@ -24,6 +24,10 @@ Inspect and manage aiohttp web application like Elasticsearch
 > [!NOTE]
 > Project status: Under construction - I am still experimenting with how to structure code in the project.
 
+## Demo
+
+[This notebook](demos/demo_aiohttp_underscore_apis.ipynb) goes through setup to usage.
+
 ## Installation
 
 ```shell
